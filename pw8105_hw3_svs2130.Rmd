@@ -1,0 +1,239 @@
+---
+title: "Homework 3"
+author: "Harsha Senapathi"
+date: "10/13/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(tibble)
+```
+
+# Problem 1
+
+```{r}
+library(p8105.datasets)
+data("instacart")
+
+n_order_per_hour_of_day = 
+  instacart %>% 
+  group_by(order_hour_of_day) %>%
+  distinct(order_id) %>% 
+  summarise(n_order_per_hour = n()) %>% 
+  arrange(desc(n_order_per_hour))
+```
+
+###Data Description
+
+The instacart dataset has the dimensions (rows, columns): *`r dim(instacart)`*. It basically describes the various characteristics associated with a specific order, pin pointed using the order_id. There are *`r count(as.tibble(unique(x = instacart$order_id)))`* number of unique orders. There are *`r count(as.tibble(unique(x = instacart$user_id)))`* unique users. Since both the numbers are same, we infer that the each unique user had only one unique order (characterised by an order_id) by them. 
+
+The structure of the dataset is: `r str(instacart)`
+
+Some other Key variables apart from the obvious "order_id" and "user_id" as discussed above are the 
+
+  * *`r nrow(instacart[unique(instacart$department_id),])`* unique departments, with each department given a unique "department_id", 
+  
+  * *`r nrow(instacart[unique(instacart$aisle_id),])`* aisles with unique "aisle_id", 
+  
+  * *`r nrow(instacart[unique(instacart$product_id),])`* unique products with each "product_name" with a unique "product_id".
+
+We notice that "eval_set" for all orders in **train** and hence consider that column to be redundant since it can clearly be mentioned in single line in the data description.
+
+Largest number of orders are done at the *`r head(n_order_per_hour_of_day$order_hour_of_day, 1)`* with *`r head(n_order_per_hour_of_day$n_order_per_hour, 1)`* orders. 
+
+Least number of orders are taken at the *`r tail(n_order_per_hour_of_day$order_hour_of_day, 1)`* with *`r tail(n_order_per_hour_of_day$n_order_per_hour, 1)`* orders only.
+
+Further exploratory analysis of the *"instacart"*. 
+
+1. How many aisles are there, and which aisles are the most items ordered from?
+
+```{r p1.1_instacart}
+instacart %>% 
+  group_by(aisle_id, aisle) %>% 
+  select(order_id, aisle_id) %>% 
+  summarise(n_orders_per_aisle = n()) %>% 
+  arrange(desc(n_orders_per_aisle)) %>% 
+  head(1) %>% 
+  knitr::kable()
+```
+There are `r nrow(instacart[unique(instacart$aisle_id),])` aisles. The table was grouped with aisle and aisle_id just to make sure that the aisle name is mentioned in the table, elsewise, each aisle has a unique aisle_id and hence just taking either one of them for grouping won't change the answer. 
+
+Since each order_id is unique to a single order, summarising along the group gives us the number of orders per aisle.
+
+2. Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
+
+```{r p1.2_instacart}
+instacart %>% 
+  filter(aisle == "asian foods") %>% 
+  select(order_id, aisle)
+
+instacart %>% 
+  group_by(aisle) %>% 
+  summarise(n_items = n()) %>% 
+  filter(n_items > 10000) %>% 
+  arrange(desc(n_items))%>%
+  ggplot(aes(x = aisle, y = n_items)) +
+  geom_point() +
+  scale_y_continuous(breaks = c(10000, 50000, 100000, 150000),
+                     limits = c(10000, 200000), 
+                     labels = c("10000", "50000", "100000", "150000")
+                     ) +
+  theme(axis.text.x = element_text(color = "#666666", angle = 90, size = rel(0.8), hjust = 1)) +
+  labs(
+    title = "Number of items bought from each aisle",
+    x = "Aisles",
+    y = "Number of items", 
+    caption = "Data from Instacart dataset"
+  ) 
+```
+
+We see that the fresh vegetables and the fresh fruits are the aisles with the most orders. We have used a continuous scale on the y-axis to show the drastic difference between the number of items bought from the fresh fruits and fresh vegetables aisles and the rest of the aisles. We see that the remaining aisles at the right end of the graph have more or less a similar amount of items sold through it. 
+
+Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+
+```{r p1.3_instacart}
+instacart %>% 
+  group_by(aisle, product_name) %>% 
+  filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>%  
+  summarise(pop_product = n()) %>% 
+  group_by(aisle) %>% 
+  filter(pop_product == max(pop_product)) %>% 
+  knitr::kable(col.names = c("Aisle", "Product", "Amount Sold"))
+```
+
+The most popular items sold among each of the three aisles is calculated by first grouping aisles and products to get the count of each product sold per aisle and then by aisle to see the product sold the most in all of that given aisle.
+
+Most popular products in the following aisles are: 
+
+  * baking ingredients - Light Brown Sugar
+  
+  * dog food care - Snacks Sticks Chicken and Reci Recipe Dog Treats
+  
+  * packaged vegetables fruits - Organic Baby Spinach
+  
+Q4. Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
+
+```{r p1.4_instacart}
+instacart %>% 
+  filter(product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>% 
+  mutate(order_dow = recode(order_dow, '0' = "Sunday", '1' = "Monday", '2' = "Tuesday", '3' = "Wednesday", '4' = "Thursday", '5' = "Friday", '6' = "Saturday")) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarise(mean_hour_of_day = mean(order_hour_of_day)) %>%
+  spread(key = order_dow, value = mean_hour_of_day) %>% 
+  knitr::kable(digits = 2)
+```
+
+Here we have a tablw showing the mean of the hour at which Coffee Ice Cream and Pink Lady Apples are ordered on a given day of week respectively.
+
+We infer that the fruit -- Pink Lady Apples are ordered usually in the first half of the day while COffee Ice Cream is more prefered post lunch hours.
+
+# Problem 2
+
+Data import and cleaning
+
+```{r p2_data_import}
+brfss = 
+  p8105.datasets::brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  rename(resp_id = respid, location_abbr = locationabbr, location_desc = locationdesc) %>% #further manual renaming to appropriate variable names
+  filter(topic == "Overall Health") %>% 
+  select(year, location_abbr, location_desc, response, data_value)
+
+brfss$response = 
+  brfss$response %>%  
+  factor(levels = c("Excellent", "Very good", "Good", "Fair", "Poor"))
+
+brfss
+```
+
+Here we cleaned the data by focussing only on the "Overall  Health" topic. Under this topic the response are exhaustively "Excellent", "Very good", "Good", "Fair" and "Poor". 
+
+We recoded the reponse column into a factor data type and set the levels from the "Excellent" to "Poor".
+
+Now we do some *exploratory analysis* of the data in the following:
+
+Q1. In 2002, which states were observed at 7 or more locations? What about in 2010?
+
+```{r p2.1_brfss}
+
+brfss %>% 
+  ungroup() %>% 
+  filter(year %in% c(2002)) %>% 
+  distinct(location_abbr, location_desc, year) %>% 
+  group_by(location_abbr, year) %>% 
+  count() %>% 
+  filter(n >= 7) %>% 
+  select(location_abbr, year) %>% 
+  knitr::kable()
+
+# for year 2010
+brfss %>% 
+  ungroup() %>% 
+  filter(year %in% c(2010)) %>% 
+  distinct(location_abbr, location_desc, year) %>% 
+  group_by(location_abbr, year) %>% 
+  count() %>% 
+  filter(n >= 7) %>% 
+  select(location_abbr, year) %>% 
+  knitr::kable()
+```
+
+Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
+
+
+```{r p2.2_brfss}
+brfss %>% 
+  filter(response == "Excellent") %>% 
+  group_by(location_abbr, year) %>% 
+  summarise(mean_data_value = mean(data_value, na.rm = TRUE) 
+  ) %>% 
+  ggplot(aes(x = year, y = mean_data_value, color = location_abbr, group = location_abbr)) + geom_line() +
+  labs(
+      title = "Distribution of state-level averages for each year",
+      x = "Year",
+      y = "Mean Data value"
+    )  +
+  theme_bw()
+``` 
+
+Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
+
+```{r}
+brfss %>%
+  ungroup() %>% 
+  filter(year %in% c(2006, 2010) & location_abbr == "NY") %>%
+  ggplot(aes(x = response, y = data_value, color = response)) + geom_point() + facet_grid(~ year) +
+   labs(
+      title = "Distribution of data value for each response in NY state",
+      x = "Response",
+      y = "Data value"
+    ) 
+  
+```
+
+# Problem 3
+
+Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
+
+```{r}
+accel = read_csv("./data/accel_data.csv") %>%
+  janitor::clean_names() %>%
+  pivot_longer(
+    cols = activity_1:activity_1440,
+    names_to = "minute_of_day", 
+    names_prefix = "activity_",
+    values_to = "activity")
+mutate(day_type = if_else(
+  day %in% c("Saturday", "Sunday"), "Weekend", "Weekday"
+))
+```
+
+
+
+
