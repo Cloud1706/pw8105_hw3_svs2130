@@ -13,14 +13,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(tibble)
+library(viridis)
+library(p8105.datasets)
 ```
 
 # Problem 1
 
 ```{r}
-library(p8105.datasets)
-data("instacart")
 
+data("instacart")
 n_order_per_hour_of_day = 
   instacart %>% 
   group_by(order_hour_of_day) %>%
@@ -62,6 +63,7 @@ instacart %>%
   head(1) %>% 
   knitr::kable()
 ```
+
 There are `r nrow(instacart[unique(instacart$aisle_id),])` aisles. The table was grouped with aisle and aisle_id just to make sure that the aisle name is mentioned in the table, elsewise, each aisle has a unique aisle_id and hence just taking either one of them for grouping won't change the answer. 
 
 Since each order_id is unique to a single order, summarising along the group gives us the number of orders per aisle.
@@ -241,7 +243,7 @@ accel = read_csv("./data/accel_data.csv") %>%
 
 ```
 
-### Here is a short description of the dataset: 
+### Description of the dataset: 
 * There are **`r nrow(accel)` observations** and **`r ncol(accel)` variables**.
 * Following are the vatiables in the dataset: **`r colnames(accel)`**.
 
@@ -276,7 +278,7 @@ accel %>%
     theme(legend.position = "bottom") + 
   scale_x_continuous(breaks = c(0:24)) +
   scale_y_continuous(
-    breaks = c(50000, 100000, 150000, 200000, 250000)
+    breaks = c(50000, 150000, 250000)
   ) + 
   labs(
     x = "Hour",
