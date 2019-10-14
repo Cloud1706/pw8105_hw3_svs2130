@@ -245,7 +245,7 @@ accel = read_csv("./data/accel_data.csv") %>%
 
 ### Description of the dataset: 
 * There are **`r nrow(accel)` observations** and **`r ncol(accel)` variables**.
-* Following are the vatiables in the dataset: **`r colnames(accel)`**.
+* Following are the variables in the dataset: **`r colnames(accel)`**.
 
 ## Problem 3_2
 
@@ -288,5 +288,5 @@ accel %>%
  theme_bw()
 ```
 
-We plotted a graph of the amoung of activity for each day of the week over 24 hours of time. We can observe that the peak activity is on fridays between 19th and 21st hour. The activity is least during the 0th to 4th hour in the morning and gradually increases.
+We plotted a graph of the among of activity for each day of the week over 24 hours of time. We can observe that the peak activity is on fridays between 19th and 21st hour. The activity is least during the 0th to 4th hour in the morning and gradually increases.
 
