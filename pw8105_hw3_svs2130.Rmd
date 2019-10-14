@@ -222,18 +222,69 @@ brfss %>%
 Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
 
 ```{r}
-accel = read_csv("./data/accel_data.csv") %>%
-  janitor::clean_names() %>%
+accel = read_csv("./data/accel_data.csv") %>% 
+  janitor::clean_names() %>% 
   pivot_longer(
-    cols = activity_1:activity_1440,
-    names_to = "minute_of_day", 
+    activity_1:activity_1440,
+    names_to = "minute", 
     names_prefix = "activity_",
-    values_to = "activity")
-mutate(day_type = if_else(
-  day %in% c("Saturday", "Sunday"), "Weekend", "Weekday"
-))
+    values_to = "activity") %>% 
+  mutate(day_type = if_else(
+  day %in% c("Saturday", "Sunday"),"weekend", "weekday"),
+  day_type = as.factor(day_type),
+  minute = as.numeric(minute),
+  activity = as.numeric(activity), 
+  minute = as.numeric(minute),
+  day = as.factor(day), 
+  week = as.factor(week),
+  day_id = as.numeric(day_id))
+
 ```
 
+### Here is a short description of the dataset: 
+* There are **`r nrow(accel)` observations** and **`r ncol(accel)` variables**.
+* Following are the vatiables in the dataset: **`r colnames(accel)`**.
 
+## Problem 3_2
 
+Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+
+```{r}
+accel %>% 
+  group_by(week, day) %>% 
+  summarise(
+    total_activity = sum(activity)
+  ) %>% 
+  knitr::kable(col.names = c("Week", "Day", "Total Activity"))
+```
+
+I do not see any apparent trends just by looking at the numbers. But the activity is least on the saturdays of week 4 and 5. We can look at the trend better by plotting a graph.
+
+## Problem 3_3
+
+Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+
+```{r}
+accel %>% 
+  mutate(hour = minute %/% 60) %>%
+  group_by(day, hour) %>%
+  summarise(
+    total_activity = sum(activity)
+  ) %>%
+  ggplot(aes(x = hour, y = total_activity, color = day)) + 
+    geom_line() + 
+    theme(legend.position = "bottom") + 
+  scale_x_continuous(breaks = c(0:24)) +
+  scale_y_continuous(
+    breaks = c(50000, 100000, 150000, 200000, 250000)
+  ) + 
+  labs(
+    x = "Hour",
+    y = "Total Activity", 
+    title = "24-hour activity time courses for each day"
+  )
+ theme_bw()
+```
+
+We plotted a graph of the amoung of activity for each day of the week over 24 hours of time. We can observe that the peak activity is on fridays between 19th and 21st hour. The activity is least during the 0th to 4th hour in the morning and gradually increases.
 
